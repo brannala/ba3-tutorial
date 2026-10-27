@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BA3 Hands-on Tutorial</title>
+<style>
+  @font-face { font-family: "Roboto"; font-weight: 400 700; src: url("fonts/roboto-latin.woff2") format("woff2"); }
+  :root {
+    --bg: #fbfaf7;
+    --surface: #ffffff;
+    --ink: #1d1d1b;
+    --ink-2: #4a4843;
+    --rule: #e2dfd7;
+    --code-bg: #f3f1ec;
+    --accent: #005581;     /* UC dark blue */
+    --gold: #FFB511;       /* UC Gold */
+    --warn: #b3261e;
+    --ok: #1b7a3d;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #161614; --surface: #1f1f1c; --ink: #f0efec; --ink-2: #c3c2b7;
+      --rule: #3a3934; --code-bg: #262622; --accent: #6cb6e6; --warn: #f08a80; --ok: #6fcf8f;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #161614; --surface: #1f1f1c; --ink: #f0efec; --ink-2: #c3c2b7;
+    --rule: #3a3934; --code-bg: #262622; --accent: #6cb6e6; --warn: #f08a80; --ok: #6fcf8f;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.55 "Roboto", system-ui, sans-serif; }
+  header { background: var(--gold); color: #1d1d1b; padding: 28px 16px 22px; }
+  header .wrap, main { max-width: 860px; margin: 0 auto; }
+  main { padding: 8px 16px 64px; }
+  h1, h2, h3 { font-family: "Google Sans", "Roboto", sans-serif; line-height: 1.25; }
+  h1 { margin: 0 0 6px; font-size: 1.9rem; }
+  header p { margin: 0; color: #3d3a33; }
+  h2 { margin: 2.2em 0 0.4em; font-size: 1.45rem; padding-top: 0.6em; border-top: 1px solid var(--rule); }
+  h3 { margin: 1.4em 0 0.3em; font-size: 1.1rem; }
+  .time { display: inline-block; font: 600 0.78rem "Roboto", sans-serif; color: #fff; background: var(--accent); border-radius: 999px; padding: 2px 10px; margin-left: 8px; vertical-align: middle; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.95rem; margin: 0.6em 0; }
+  th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { border-bottom: 2px solid var(--ink-2); }
+  .tablewrap { overflow-x: auto; }
+  pre { position: relative; background: var(--code-bg); border-radius: 8px; padding: 12px 14px; overflow-x: auto; font: 0.86rem/1.45 "JetBrains Mono", Menlo, Consolas, monospace; margin: 0.6em 0; }
+  code { font-family: "JetBrains Mono", Menlo, Consolas, monospace; font-size: 0.9em; }
+  :not(pre) > code { background: var(--code-bg); padding: 0 4px; border-radius: 4px; white-space: nowrap; }
+  :not(pre) > code.wrap { white-space: normal; overflow-wrap: anywhere; }
+  .copy { position: absolute; top: 6px; right: 6px; font: 600 0.72rem "Roboto", sans-serif; background: var(--surface); color: var(--ink-2); border: 1px solid var(--rule); border-radius: 6px; padding: 3px 8px; cursor: pointer; }
+  .copy:hover { color: var(--accent); border-color: var(--accent); }
+  .note { border-left: 5px solid var(--accent); background: var(--surface); padding: 10px 14px; margin: 1em 0; border-radius: 0 8px 8px 0; }
+  .note.warn { border-color: var(--warn); }
+  details { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 8px 14px; margin: 0.6em 0; }
+  details summary { cursor: pointer; font-weight: 600; }
+  details[open] summary { margin-bottom: 6px; color: var(--accent); }
+  ol.q > li { margin-bottom: 0.7em; }
+  .muted { color: var(--ink-2); }
+  a { color: var(--accent); }
+  @media (max-width: 600px) { body { font-size: 16px; } h1 { font-size: 1.5rem; } }
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <h1>Estimating recent migration with BA3</h1>
+  <p>ConGen 2026 · 30-minute hands-on tutorial · simulated and real SNP datasets</p>
+</div></header>
+<main>
+
+<h2>Plan</h2>
+<p>Each exercise starts by running BA3 from the command line. A run takes under 2 minutes, and BA3 shows a progress bar while it works. When it finishes, you look at the results. If the server is slow, the same runs are in <code>results/</code>, computed in advance.</p>
+<div class="tablewrap"><table>
+  <tr><th>Time</th><th>Exercise</th><th>Data</th><th>Lesson</th></tr>
+  <tr><td>0:00</td><td>0. Set up</td><td></td><td></td></tr>
+  <tr><td>0:02</td><td>1. A dataset with a known truth</td><td>simulated, 8 populations of 500+</td><td>reading the output; what <em>m</em> estimates; Bayes factors and their ceiling; burn-in and convergence</td></tr>
+  <tr><td>0:09</td><td>2. Who are the migrants?</td><td>simulated, 3 populations of 300+</td><td>individual ancestry (<code>-g</code>); exact Bayes factors (<code>-B</code>)</td></tr>
+  <tr><td>0:14</td><td>3. One population sampled as two</td><td>simulated, oversplit</td><td>recognising panmixia</td></tr>
+  <tr><td>0:17</td><td>4. Malagasy palms</td><td>real, 8 populations</td><td>the pooling artefact; flat versus hierarchical prior; detecting versus excluding migration</td></tr>
+  <tr><td>0:23</td><td>5. Sea trout</td><td>real, 4 populations of 26–52</td><td>a published flat-prior artefact; evidence for and against migration; checking migrants against an independent assignment</td></tr>
+  <tr><td>0:30</td><td>Checklist</td><td></td><td></td></tr>
+</table></div>
+
+<div class="note warn"><strong>BA3 version.</strong> This tutorial uses the options <code>-B</code>, <code>-e</code> and <code>-r</code>, which were added after BA3 3.6.1. To check that your BA3 has them, run <code>BA3 -h | grep bfexact</code>: it should print a line. Versions before 3.6.0 lack the hierarchical prior (<code>-H</code>), and the Bayes factors printed by 3.4.0–3.5.0 have inaccuracies.</div>
+
+<h2>0. Set up <span class="time">2 min</span></h2>
+<p>BA3 runs in a terminal: on the course server, the RStudio <strong>Terminal</strong> tab. The two R steps (a trace plot and an ancestry table) run in the RStudio <strong>Console</strong>. In the terminal, copy the tutorial folder, set two variables and move to the run directory:</p>
+<pre><code>cp -r ~/instructor_materials/Bruce_Rannala/ba3_tutorial ~/
+D=~/ba3_tutorial/data
+mkdir -p ~/ba3_tutorial/runs &amp;&amp; cd ~/ba3_tutorial/runs</code></pre>
+<p>All runs are made in this one directory. Each run gets a name with <code>-r</code>, which BA3 puts in front of every file it writes: <code>-r demo8 -o out.txt</code> writes <code>demo8_out.txt</code> and, if asked for, <code>demo8_BA3trace.txt</code> and <code>demo8_BA3indiv.txt</code>.</p>
+
+<h2>1. A dataset with a known truth <span class="time">7 min</span></h2>
+<p><strong>demo8</strong>: 8 populations of 513–582 individuals (4,383 in total), 2,000 unlinked SNPs, <em>F</em><sub>ST</sub> = 0.05, no inbreeding, no missing data. It was simulated under BA3's own model with three migration routes: pop0 → pop1 (<em>m</em> = 0.15), pop2 → pop3 (0.10) and pop4 → pop5 (0.05). Every other route has no migration. The file <code>data/demo8_truth.json</code> records the true ancestry of every individual.</p>
+<h3>Run BA3 <span class="muted">(about 1 min)</span></h3>
+<pre><code>BA3 -c -H -e 1000 -s 1 -i 600000 -b 250000 -n 25 -r demo8 \
+     -V $D/demo8.vcf -M $D/demo8_meta.txt -o out.txt</code></pre>
+<div class="tablewrap"><table>
+  <tr><th>Option</th><th>Meaning</th></tr>
+  <tr><td><code>-V</code>, <code>-M</code></td><td>the VCF, and a two-column file of individual and population</td></tr>
+  <tr><td><code>-c</code></td><td>collapsed sampler: allele frequencies are integrated out, which is much faster and targets the same posterior</td></tr>
+  <tr><td><code>-H</code></td><td>hierarchical allele-frequency prior: population frequencies vary around shared ancestral frequencies</td></tr>
+  <tr><td><code>-i</code>, <code>-b</code>, <code>-n</code></td><td>iterations, burn-in, and sampling interval (here 14,000 states are recorded after burn-in)</td></tr>
+  <tr><td><code>-s</code></td><td>random-number seed</td></tr>
+  <tr><td><code>-e</code></td><td>write the trace (<code>demo8_BA3trace.txt</code>) every 1,000 iterations. Each trace line recomputes the full log-likelihood, so a trace at every recorded state (<code>-t</code>) would add about 40 s here</td></tr>
+  <tr><td><code>-r</code></td><td>run name, put in front of every output file</td></tr>
+  <tr><td><code>-o</code></td><td>the results file (<code>demo8_out.txt</code> with the run name)</td></tr>
+</table></div>
+<p class="muted">With many individuals, BA3 needs more iterations: each iteration updates only part of the state, so with 4,383 individuals each one is visited less often. Question 4 shows what happens during burn-in.</p>
+<h3>Look at the results</h3>
+<pre><code>grep -A 11 "Migration Rate" demo8_out.txt       # migration matrix
+grep "for H1" demo8_out.txt                      # routes with evidence of migration
+grep -A 5 "Pr(c=0) =" demo8_out.txt              # notes under the Bayes-factor table</code></pre>
+<p>Read the matrix as <strong>row <em>i</em> = the population sampled, column <em>j</em> = the source</strong>: <code>m[1][0]</code> is the fraction of pop1 descended from migrants from pop0. Each row sums to 1.</p>
+<ol class="q">
+  <li>Which routes have <em>m</em> clearly above the background? How close are the estimates to the simulated values 0.15, 0.10 and 0.05?
+    <details><summary>Answer</summary>pop0 → pop1 = 0.156, pop2 → pop3 = 0.107, pop4 → pop5 = 0.035 (SD 0.004–0.007); every other off-diagonal entry is about 0.0006. The estimates match the migrants actually <em>sampled</em>: 256 of the 540 individuals in pop1, 184 of 565 in pop3 and 54 of 513 in pop5 are migrants, which correspond to <em>m</em> = 0.158, 0.109 and 0.035. pop5 happens to contain fewer migrants than the simulated rate predicts. BA3 estimates migration in your sample; the gap to the simulation parameter is binomial sampling noise that more loci cannot remove.</details></li>
+  <li>The Bayes-factor table reports BF<sub>01</sub> for every route. BF<sub>01</sub> &gt; 1 supports no migration, &lt; 1 supports migration. How strong is the evidence on the three true routes, and on the 53 absent ones? What does the <code>&lt;</code> in front of some Bayes factors mean?
+    <details><summary>Answer</summary>All three true routes are "Decisive for H1", printed as <code>&lt;0.0056</code> or similar. BA3 estimates Pr(c = 0) by the fraction of recorded states with no migrants on the route, and here none of the 14,000 states had any. The <code>&lt;</code> value is what a single such state would give: it shows the resolution of the run, not a guaranteed bound, and it would change with a longer run. Exercise 2 uses <code>-B</code> to estimate the Bayes factor on such routes. All 53 absent routes are "Strong for H0", and none is "Decisive".</details></li>
+  <li>Why can't any absent route reach "Decisive for H0" (BF<sub>01</sub> &gt; 100)?
+    <details><summary>Answer</summary>BF<sub>01</sub> = Pr(c = 0 | data) × (<em>n<sub>i</sub></em> + <em>K</em> − 1)/(<em>K</em> − 1), where <em>c</em> is the number of sampled individuals that are migrants on the route, <em>n<sub>i</sub></em> is the sample size of the receiving population and <em>K</em> the number of populations. Here Pr(c = 0) = 1.0000 on every absent route, so the Bayes factor is already at its ceiling: (513 + 7)/7 = 74.3 to (582 + 7)/7 = 84.1. Finding no migrants among <em>n</em> individuals cannot exclude a small rate, so only more individuals, not more loci, raise the ceiling. With <em>K</em> = 8, decisive evidence needs <em>n<sub>i</sub></em> &gt; 99 × 7 = 693. (Exercise 2 shows the effect of fewer populations.)</details></li>
+  <li>Did the run converge? Run a second seed <span class="muted">(about 1 min)</span> and compare the two matrices:
+<pre><code>BA3 -c -H -s 2 -i 600000 -b 250000 -n 25 -r demo8_s2 \
+     -V $D/demo8.vcf -M $D/demo8_meta.txt -o out.txt
+grep -A 11 "Migration Rate" demo8_out.txt demo8_s2_out.txt</code></pre>
+    Then plot the trace of the first run in the RStudio <strong>Console</strong>; the plot appears in the Plots pane. The trace starts at the beginning of the run, so it includes the burn-in; the dashed line marks its end:
+<pre><code>source("~/ba3_tutorial/scripts/plot_trace.R")
+plot_trace("~/ba3_tutorial/runs/demo8_BA3trace.txt", "m[1][0]", burnin = 250000)</code></pre>
+    <p class="muted">Without RStudio, run <code class="wrap">Rscript ~/ba3_tutorial/scripts/plot_trace.R demo8_BA3trace.txt "m[1][0]" 250000 demo8_trace.png</code> in the terminal and open the PNG file.</p>
+    <details><summary>Answer</summary>The two seeds agree to within about 0.001. The trace shows why the burn-in matters: <code>m[1][0]</code> starts near 0.02 and climbs to about 0.15 over the first 200,000–250,000 iterations while the log probability rises, then both fluctuate around a stable level. A run of 200,000 iterations would have stopped while the chain was still climbing and reported <em>m</em> ≈ 0.11. Agreement between seeds is necessary but not sufficient: a chain can settle in the same wrong mode with every seed (Exercise 4). Compare runs of different lengths too.</details></li>
+</ol>
+
+<h2>2. Who are the migrants? <span class="time">5 min</span></h2>
+<p><strong>demo3</strong>: 3 populations of 315–337 individuals, 1,000 SNPs, <em>F</em><sub>ST</sub> = 0.05. pop1 receives migrants from two sources: pop0 (<em>m</em> = 0.10) and pop2 (0.05). Two new options:</p>
+<ul>
+  <li><code>-g</code> writes, for every individual, the posterior probability of each ancestry to <code>demo3_BA3indiv.txt</code>. That file lists each individual's genotypes too, so it grows with individuals × loci (12 MB here); use <code>-g</code> only when you need it.</li>
+  <li><code>-B 10</code> adds a second Bayes-factor table, computed from every 10th recorded state, that estimates the Bayes factor even on routes where the default table can only print <code>&lt;</code>. It is slower (it computes every individual's likelihood under every ancestry), so use it when <code>&lt;</code> appears on a route that matters.</li>
+</ul>
+<h3>Run BA3 <span class="muted">(about 20 s)</span></h3>
+<pre><code>BA3 -c -H -g -B 10 -s 1 -i 300000 -b 100000 -n 50 -r demo3 \
+     -V $D/demo3.vcf -M $D/demo3_meta.txt -o out.txt</code></pre>
+<h3>Look at the results</h3>
+<pre><code>grep -A 6 "Migration Rate" demo3_out.txt
+grep -A 10 "Savage-Dickey Density" demo3_out.txt
+grep -A 12 "Exact Savage-Dickey" demo3_out.txt
+grep -A 200 "Individual: p1_012 " demo3_BA3indiv.txt | grep -A 3 "Migrant ancestry"</code></pre>
+<p>In <code>demo3_BA3indiv.txt</code>, <code>[s,g]</code> is the probability that the individual's ancestry is from population <code>s</code> with generation <code>g</code>: 0 = non-migrant, 1 = first-generation migrant, 2 = child of a migrant.</p>
+<ol class="q">
+  <li>How well are the two migration rates into pop1 estimated? How strong is the evidence that the other four routes are absent, and why is it stronger than in Exercise 1?
+    <details><summary>Answer</summary><em>m</em> = 0.107 from pop0 and 0.050 from pop2, matching the migrants sampled (0.107 and 0.050). The four absent routes are "Decisive for H0", with BF<sub>01</sub> = 158 (into pop0) and 168 (into pop2). Those are the ceilings, (<em>n<sub>i</sub></em> + <em>K</em> − 1)/(<em>K</em> − 1) = (<em>n<sub>i</sub></em> + 2)/2 for 315 and 334 individuals: no sampled individual is a migrant on these routes. In Exercise 1 the populations were larger (513–582 individuals), yet the ceiling was only 74–84, because there <em>K</em> − 1 = 7 instead of 2. With more populations, the prior spreads each population's migrants over more possible sources, so every single route already has a small rate a priori, and finding no migrants on it is weaker evidence.</details></li>
+  <li>The default table prints the two true routes as <code>&lt;0.0424</code>, "Strong for H1 or more". What does the <code>-B</code> table give, and why can the default table not show it?
+    <details><summary>Answer</summary>log<sub>10</sub> BF<sub>01</sub> ≈ −1,916 for pop0 → pop1 and −895 for pop2 → pop1: overwhelming evidence for migration. The default table counts recorded states with no migrant on the route; with 4,000 states and none of them having c = 0, the smallest value it can show is about 1/4,000 of the ceiling, 0.04. <code>-B</code> averages, over the states, the probability that no individual is a migrant from the source given the state's migration rates and allele frequencies, which is never exactly zero. The last digits of such extreme values vary between runs, which does not matter this far from any threshold. On the absent routes both tables agree (BF<sub>01</sub> = 158 and 168).</details></li>
+  <li>What is individual <code>p1_012</code>?
+    <details><summary>Answer</summary><code>[2,2]:1.000</code>: the child of a migrant from pop2 (a second-generation migrant), with probability 1. The truth file agrees: <code>grep p1_012 ~/ba3_tutorial/data/demo3_truth.tsv</code>.</details></li>
+  <li>How many individuals in pop1 does BA3 classify correctly? In the RStudio <strong>Console</strong>, find each individual's most probable ancestry and tabulate it against the truth:
+<pre><code>source("~/ba3_tutorial/scripts/ancestry_vs_truth.R")
+ancestry_vs_truth("~/ba3_tutorial/runs/demo3_BA3indiv.txt",
+                  "~/ba3_tutorial/data/demo3_truth.tsv", pop = "pop1")</code></pre>
+    <p class="muted">Without RStudio: <code class="wrap">Rscript ~/ba3_tutorial/scripts/ancestry_vs_truth.R demo3_BA3indiv.txt ~/ba3_tutorial/data/demo3_truth.tsv pop1</code> in the terminal.</p>
+    <details><summary>Answer</summary>All 337: every count is on the diagonal (179 non-migrants; 36 first- and 72 second-generation migrants from pop0; 19 and 31 from pop2), and every individual's most probable ancestry has probability 1. With 1,000 SNPs at <em>F</em><sub>ST</sub> = 0.05, each migrant is unambiguous, generation included. With lower differentiation or fewer loci the probabilities spread out, and individuals are no longer classified with certainty.</details></li>
+</ol>
+
+<h2>3. One population sampled as two <span class="time">3 min</span></h2>
+<p><strong>split</strong>: 4 simulated populations (50, 100, 50 and 50 individuals; 5,000 SNPs; <em>F</em><sub>ST</sub> = 0.05) with one true route, pop0 → pop2 (<em>m</em> = 0.1). The 100 individuals of pop1 were divided at random into two "populations", <code>pop1a</code> and <code>pop1b</code>. They are a single randomly mating population.</p>
+<h3>Run BA3 <span class="muted">(about 40 s)</span></h3>
+<pre><code>BA3 -c -H -s 1 -i 200000 -b 50000 -n 100 -r split \
+     -V $D/split.vcf -M $D/split_meta.txt -o out.txt</code></pre>
+<h3>Look at the results</h3>
+<pre><code>grep -A 8 "Migration Rate" split_out.txt
+grep "for H1" split_out.txt
+grep -A 7 "Inbreeding Coef" split_out.txt</code></pre>
+<ol class="q">
+  <li>What does BA3 report between <code>pop1a</code> and <code>pop1b</code>? What does the Bayes factor say?
+    <details><summary>Answer</summary>Migration in both directions, near the model's upper bound of 1/3: about 0.31 one way and 0.21 the other, both "Decisive for H1". The true route pop0 → pop2 is still recovered (0.10). BA3 has no way to say "these are the same population"; the only way it can explain two samples with the same allele frequencies is to call most of one sample migrants from the other.</details></li>
+  <li>How would you recognise this in real data?
+    <details><summary>Answer</summary>Reciprocal <em>m</em> near 1/3 between a pair of samples; often <em>F</em> ≈ 0.5 with SD ≈ 0.29 in one of them (here pop1b), which is the prior, because almost all its individuals are second-generation migrants and carry no information about <em>F</em>; other routes unaffected. Check pairwise <em>F</em><sub>ST</sub>, a PCA or STRUCTURE plot and geography, then merge the samples and rerun.</details></li>
+</ol>
+
+<h2>4. Malagasy palms: flat versus hierarchical prior <span class="time">6 min</span></h2>
+<p><strong>palmBN</strong>: a published RAD-seq dataset (Dryad <a href="https://doi.org/10.5061/dryad.pc866t1z6">10.5061/dryad.pc866t1z6</a>), 52 individuals from 8 populations (6–7 each), 5,524 SNPs with up to 50% missing data. You run it twice, changing only the allele-frequency prior: first the default flat prior (no <code>-H</code>), then the hierarchical prior. The second run also writes individual ancestries (<code>-g</code>) and the exact Bayes-factor table (<code>-B 1</code>, every recorded state; with only 52 individuals this costs a few seconds).</p>
+<h3>Run BA3 twice <span class="muted">(about 45 s and 60 s)</span></h3>
+<pre><code>BA3 -c -s 1 -i 200000 -b 50000 -n 100 -r palmBN_flat \
+     -V $D/palmBN.vcf -M $D/palmBN_meta.txt -o out.txt
+BA3 -c -H -g -B 1 -s 1 -i 200000 -b 50000 -n 100 -r palmBN_hier \
+     -V $D/palmBN.vcf -M $D/palmBN_meta.txt -o out.txt</code></pre>
+<h3>Look at the results</h3>
+<pre><code>grep -A 10 "Migration Rate"  palmBN_flat_out.txt palmBN_hier_out.txt
+grep -A 10 "Inbreeding Coef" palmBN_flat_out.txt palmBN_hier_out.txt</code></pre>
+<p class="muted">Population indices: 0 = BN1, 1 = BN2, 2 = BN3, 3 = BN4, 4 = BN5, 5 = BN7, 6 = BN8, 7 = BN9.</p>
+<ol class="q">
+  <li>Under the flat prior, is there a population that seems to send migrants to many others? What are <em>m<sub>ii</sub></em> and <em>F</em> in the receiving populations?
+    <details><summary>Answer</summary>BN5 (column 4) appears as a source for BN4, BN7, BN8 and BN9, each at <em>m</em> ≈ 0.16–0.17. Those populations have <em>m<sub>ii</sub></em> ≈ 0.69, close to the lower bound of 2/3, and <em>F</em> ≈ 0.50 with SD ≈ 0.29, which is just the prior on <em>F</em>. Whole populations have been recast as second-generation migrants from BN5. This is the <strong>pooling artefact</strong>: with few individuals per population, the flat prior lets one population's allele frequencies stand in for several.</details></li>
+  <li>What changes with <code>-H</code>?
+    <details><summary>Answer</summary>BN5 no longer sends migrants anywhere. Three routes remain: BN2 → BN1 (<em>m</em> ≈ 0.16, found under both priors), BN4 → BN8 (≈ 0.11) and BN3 → BN4 (≈ 0.05, SD 0.03), and the <em>F</em> values (0.00–0.17) are now estimated from the data. With small samples per population, use <code>-H</code>.</details></li>
+  <li>The hierarchical run finds evidence for migration on three routes. How strong is it, and how strong can the evidence for <em>no</em> migration be on any route?
+<pre><code>grep "for H1" palmBN_hier_out.txt        # three lines from the default table, then three from -B
+grep "cannot exceed" palmBN_hier_out.txt</code></pre>
+    <details><summary>Answer</summary>The default table prints all three as <code>&lt;0.0013</code>: none of the 1,500 recorded states had zero migrants on them. The <code>-B</code> table gives log<sub>10</sub> BF<sub>01</sub> ≈ −1,031 (BN2 → BN1), −197 (BN4 → BN8) and −176 (BN3 → BN4). In the other direction, BF<sub>01</sub> cannot exceed (7 + 7)/7 = 2.0 with 6–7 individuals per population and <em>K</em> = 8, so all 53 absent routes are only "Weak for H0". <strong>Migration is much easier to detect than to exclude</strong>: one clearly identified migrant makes the evidence for migration decisive, but no number of loci can show that a route is absent; only sampling many more individuals per population raises that ceiling.</details></li>
+  <li>Who are the migrants? List every individual whose most probable ancestry is a migrant (<code>[source,generation]</code>, generation 1 or 2):
+<pre><code>awk '/Individual:/{id=$2} /\[[0-9]+,[12]\]:/{for(i=1;i&lt;=NF;i++){split($i,a,":"); if(a[2]&gt;0.5) print id, a[1], a[2]}}' palmBN_hier_BA3indiv.txt</code></pre>
+    <details><summary>Answer</summary>BN3 → BN4 rests on a single individual, BN4_LM244, a second-generation migrant from BN3 with probability 1. One migrant among 7 is enough for decisive evidence of migration, but it leaves <em>m</em> barely estimated (0.05 ± 0.03). The other two routes are different: 6 of the 7 BN1 individuals are called second-generation migrants from BN2, and 4 of the 6 BN8 individuals migrants from BN4. When almost a whole sample is "migrants" from one source, ask whether the two samples are really distinct populations (Exercise 3). The Bayes factor measures the evidence for migration under the BA3 model; it cannot show that the model's explanation is the right one.</details></li>
+</ol>
+
+<h2>5. Sea trout in a Norwegian fjord <span class="time">7 min</span></h2>
+<p><strong>trout</strong>: anadromous brown trout (sea trout) from four rivers flowing into Sognefjorden, Norway: Lærdal (29 fish), Årdal (39), Fortun (26) and Aurland (52), typed for 2,138 SNPs with no missing data (Hawley et al. 2025, <em>Evolutionary Applications</em> 18: e70130; data CC0, <a href="https://doi.org/10.18710/IGV7XU">doi:10.18710/IGV7XU</a>). The populations are declining under hydropower regulation, salmon lice from aquaculture and stocking. The fish are "veteran migrants" caught in the rivers as adults, so the river a fish was caught in is not necessarily the river it was born in. 91 of them also carried acoustic tags, which recorded where they went in the spawning season (<code>data/trout_telemetry.csv</code>).</p>
+<p>The published analysis used BA3-SNPs, which has BA3's default flat allele-frequency prior. You run both priors.</p>
+<h3>Run BA3 twice <span class="muted">(about 75 s and 95 s)</span></h3>
+<pre><code>BA3 -c -s 1 -i 1000000 -b 250000 -n 100 -r trout_flat -o out.txt $D/trout.txt
+BA3 -c -H -g -B 10 -s 1 -i 1000000 -b 250000 -n 100 -r trout_hier -o out.txt $D/trout.txt</code></pre>
+<p class="muted">This data file is in BA3's own format (individual, population, locus, allele 1, allele 2), so it is given without <code>-V</code> and <code>-M</code>. Population indices: 0 = Lærdal, 1 = Årdal, 2 = Fortun, 3 = Aurland.</p>
+<h3>Look at the results</h3>
+<pre><code>grep -A 7 "Migration Rate"  trout_flat_out.txt trout_hier_out.txt
+grep -A 7 "Inbreeding Coef" trout_flat_out.txt trout_hier_out.txt</code></pre>
+<ol class="q">
+  <li>Under the flat prior, what happens to Lærdal and Fortun?
+    <details><summary>Answer</summary>Both have a non-migrant fraction <em>m<sub>ii</sub></em> of 0.68, at the lower bound of 2/3, and <em>F</em> = 0.50, the prior: almost every fish sampled there is treated as the offspring of a migrant from Årdal (<em>m</em> ≈ 0.28 into each). This is the pooling artefact of Exercise 4, in a dataset with 26–39 fish per river. The published analysis reported natal-site fidelity of 0.689 for Lærdal and 0.680 for Fortun, the same signature; the three rivers involved are the least differentiated pairs (<em>F</em><sub>ST</sub> 0.02).</details></li>
+  <li>What changes with <code>-H</code>, and how strong is the evidence for and against migration?
+<pre><code>grep "for H" trout_hier_out.txt                # default table first, then the -B table
+grep "cannot exceed" trout_hier_out.txt</code></pre>
+    <details><summary>Answer</summary>The non-migrant fractions are now 0.94 (Lærdal), 0.79 (Årdal), 0.86 (Fortun) and 0.95 (Aurland), and <em>F</em> is 0.01–0.03 everywhere. Årdal receives the most migrants, about 0.09 each from Lærdal and Fortun. Eight routes have decisive evidence for migration (<code>-B</code>: log<sub>10</sub> BF<sub>01</sub> from −14 to −134). With 26–52 fish per river and <em>K</em> = 4 the ceiling is 9.7–18.3, so evidence <em>against</em> migration is possible too: Årdal → Lærdal and Årdal and Fortun → Aurland are "Strong for H0". Only Årdal → Fortun is unresolved: the two rivers are the least differentiated pair, and that rate also varies most between runs.</details></li>
+  <li>Who are the first-generation migrants, and does an independent method agree? List every fish whose most probable ancestry is first-generation (<code>[source,1]</code>), then look up a fish in the telemetry file, which has the paper's own genetic assignment (column <code>Pop.assign</code>, from a discriminant analysis, DAPC) and the rivers where it was detected in the spawning season:
+<pre><code>awk '/Individual:/{id=$2} /\[[0-9]+,1\]:/{for(i=1;i&lt;=NF;i++){split($i,a,":"); if(a[2]&gt;0.5) print id, a[1], a[2]}}' trout_hier_BA3indiv.txt
+grep -E "^FishID|,AUR01," $D/trout_telemetry.csv | cut -d, -f2,7,9,13</code></pre>
+    <details><summary>Answer</summary>BA3 identifies 20 first-generation migrants with probability 0.9–1.0, most of them in the Årdal sample and most from Lærdal. 14 of them were tagged, and for 12 of those the paper's DAPC assignment names the same river of origin (the exceptions are ARD04 and ARD35). AUR01, for example, was caught in Aurland; BA3 says it is a first-generation migrant from Lærdal, DAPC assigns it to Lærdal, and it was detected in Aurland in three spawning seasons and in Lærdal in one. The telemetry records where adults went, which is not the same as where their parents came from, so it cannot check BA3's rates route by route; but it shows that adults move between these rivers often, as the many first-generation migrants imply.</details></li>
+</ol>
+
+<h2>Checklist for your own data <span class="time">1 min</span></h2>
+<ul>
+  <li>Use a current BA3 (with <code>-B</code>); rerun any Bayes factors from 3.4–3.5.</li>
+  <li>Thin to <strong>unlinked</strong> loci (for RAD data, one SNP per tag).</li>
+  <li>Use <code>-c</code> for speed, and <code>-H</code> when populations have few individuals.</li>
+  <li>Run <strong>at least two seeds</strong>, compare <em>m</em> and <em>F</em>, look at the trace, and try a longer run.</li>
+  <li>Red flags: <em>m</em> near 1/3 or <em>m<sub>ii</sub></em> near 2/3; <em>F</em> ≈ 0.5 with SD ≈ 0.29; one population "sending" to many others; reciprocal near-bound <em>m</em> between two samples; seeds that disagree.</li>
+  <li>If the Bayes-factor table prints <code>&lt;</code> on a route that matters, rerun with <code>-B</code>.</li>
+  <li>Migration is easier to detect than to exclude: one clear migrant gives decisive evidence for migration, but evidence for its absence is capped by the number of individuals sampled.</li>
+  <li>Test routes with the Bayes factor, and check its ceiling (<em>n<sub>i</sub></em> + <em>K</em> − 1)/(<em>K</em> − 1) in the notes under the table.</li>
+  <li>For more power, sample <strong>more individuals</strong> per population before typing more loci.</li>
+</ul>
+
+<h2>Files</h2>
+<div class="tablewrap"><table>
+  <tr><th>Path</th><th>Contents</th></tr>
+  <tr><td><code>data/demo8*</code></td><td>simulated, 8 populations of 513–582; VCF, population file, truth (JSON)</td></tr>
+  <tr><td><code>data/demo3*</code></td><td>simulated, 3 populations of 315–337, 1,000 SNPs; truth also as a tab-separated file</td></tr>
+  <tr><td><code>data/split*</code></td><td>simulated, pop1 split into pop1a and pop1b</td></tr>
+  <tr><td><code>data/palmBN*</code></td><td>Malagasy palm, species BN (CC0, Dryad)</td></tr>
+  <tr><td><code>data/trout.txt</code>, <code>data/trout_telemetry.csv</code></td><td>sea trout, 4 rivers (BA3 format), and the telemetry and DAPC assignments of tagged fish (CC0, DataverseNO)</td></tr>
+  <tr><td><code>scripts/</code></td><td><code>plot_trace.R</code> (trace plot) and <code>ancestry_vs_truth.R</code> (individual ancestry against the truth): <code>source()</code> them in R, or run them with <code>Rscript</code> from a terminal</td></tr>
+  <tr><td><code>results/</code></td><td>the same runs computed in advance, with the file names they produce (<code>demo8_out.txt</code>, <code>demo8_BA3trace.txt</code>, <code>demo3_BA3indiv.txt</code>, …) and the commands used in <code>commands.txt</code></td></tr>
+  <tr><td><code>make_data.sh</code></td><td>regenerates the simulated datasets</td></tr>
+</table></div>
+<p class="muted">Population files have two columns, individual and population, matching the sample names in the VCF. Run any of them on your own as <code>BA3 -c -H -r name -V file.vcf -M file_meta.txt -o out.txt</code>.</p>
+
+</main>
+<script>
+  document.querySelectorAll("pre").forEach(function (pre) {
+    var b = document.createElement("button");
+    b.className = "copy"; b.type = "button"; b.textContent = "Copy";
+    b.addEventListener("click", function () {
+      var text = pre.querySelector("code").innerText;
+      var done = function () { b.textContent = "Copied"; setTimeout(function () { b.textContent = "Copy"; }, 1200); };
+      if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, function () {});
+    });
+    pre.appendChild(b);
+  });
+</script>
+</body>
+</html>
